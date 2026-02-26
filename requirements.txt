@@ -4,7 +4,8 @@ pydantic==2.9.2
 pandas==2.2.3
 openpyxl==3.1.5
 duckdb==1.1.1
-pyarrow==17.0.0
+pyarrow==23.0.1
+pyarrow==23.0.1
 python-dotenv==1.0.1
 pytest==8.3.3
 pydantic-settings==2.5.2
