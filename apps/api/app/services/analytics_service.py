@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from packages.analytics.src.analytics import overview_kpis, dependency_by_product
+from packages.analytics.src.analytics import overview_kpis, dependency_by_product, validate_kpi_inputs
 from ..repositories.duckdb_repository import DuckDBRepository
 
 
@@ -13,6 +13,7 @@ class AnalyticsService:
     def overview(self, year: int | None = None) -> dict:
         exports = self.repository.read("fact_exports")
         imports = self.repository.read("fact_imports")
+        exports, imports = validate_kpi_inputs(exports, imports)
         return overview_kpis(exports, imports, year)
 
     @lru_cache(maxsize=64)

@@ -3,19 +3,28 @@ from __future__ import annotations
 import pandas as pd
 
 
+def _safe_series(df: pd.DataFrame, col: str) -> pd.Series:
+    if col in df.columns:
+        return df[col]
+    return pd.Series([0] * len(df), index=df.index)
+
+
 def overview_kpis(exports: pd.DataFrame, imports: pd.DataFrame, year: int | None = None) -> dict:
     if year:
-        exports = exports[exports["year"] == year]
-        imports = imports[imports["year"] == year]
+        exports = exports[_safe_series(exports, "year") == year]
+        imports = imports[_safe_series(imports, "year") == year]
 
-    total_exports = float(exports["fob"].sum()) if not exports.empty else 0.0
-    total_imports = float(imports["fob"].sum()) if not imports.empty else 0.0
-    total_cif = float(imports["cif"].sum()) if "cif" in imports.columns else 0.0
+    total_exports = float(_safe_series(exports, "fob").sum()) if not exports.empty else 0.0
+    total_imports = float(_safe_series(imports, "fob").sum()) if not imports.empty else 0.0
+    total_cif = float(_safe_series(imports, "cif").sum()) if not imports.empty else 0.0
     logistics_cost = total_cif - total_imports
 
-    country_rank = (
-        exports.groupby("country_name", as_index=False)["fob"].sum().sort_values("fob", ascending=False).head(10)
-    )
+    if "country_name" in exports.columns and "fob" in exports.columns:
+        country_rank = (
+            exports.groupby("country_name", as_index=False)["fob"].sum().sort_values("fob", ascending=False).head(10)
+        )
+    else:
+        country_rank = pd.DataFrame(columns=["country_name", "fob"])
 
     return {
         "total_exports_fob": total_exports,
@@ -27,6 +36,9 @@ def overview_kpis(exports: pd.DataFrame, imports: pd.DataFrame, year: int | None
 
 
 def dependency_by_product(exports: pd.DataFrame, china_name: str = "CHINA") -> pd.DataFrame:
+    if exports.empty or not {"hs10", "country_name", "fob"}.issubset(exports.columns):
+        return pd.DataFrame(columns=["hs10", "fob_total", "fob_china", "share_china"])
+
     grp = exports.groupby(["hs10", "country_name"], as_index=False)["fob"].sum()
     totals = grp.groupby("hs10", as_index=False)["fob"].sum().rename(columns={"fob": "fob_total"})
     china = grp[grp["country_name"].str.upper() == china_name].rename(columns={"fob": "fob_china"})

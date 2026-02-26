@@ -59,6 +59,15 @@ Si no tienes datos todavía, puedes habilitar datos sintéticos:
 ETL_SEED_DEMO=true make etl
 ```
 
+
+## Robustez ETL implementada
+
+- Expansión robusta de rangos de capítulos (`01–05`, `01—05`, `01-05`) con warnings en logs ante tokens inválidos.
+- Normalización de texto sucio (BOM/unicode invisible, guiones unicode, puntuación final, espacios).
+- Resolución por alias de columnas requeridas (`Periodo`, `FOB`, `CIF`, `País`, `HS10`) y omisión segura de archivos inválidos sin detener el pipeline.
+- Validaciones previas a KPI: duplicados en `dim_hs`, cobertura de `dim_sector`, negativos FOB/CIF y existencia de China.
+- Manejo multiarchivo para export/import con lectura recursiva de carpetas y trazabilidad por `source_file`.
+
 ## Testing
 
 ```bash
